@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moon Binary Mission</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <section class="game-frame" aria-label="Moon Binary Mission game area">
+      <canvas id="gameCanvas" width="1280" height="720">
+        Your browser does not support HTML5 Canvas.
+      </canvas>
+
+      <div id="hud" class="hud" aria-live="polite">
+        <div>
+          <span class="hud-label">Mode</span>
+          <span id="hudMode">Choose a mode</span>
+        </div>
+        <div>
+          <span class="hud-label">Timer</span>
+          <span id="hudTimer">00:00</span>
+        </div>
+        <div>
+          <span class="hud-label">Rocket pieces</span>
+          <span id="hudPieces">0/8</span>
+        </div>
+      </div>
+
+      <div id="launchMessage" class="launch-message is-hidden" aria-live="polite">
+        Rocket complete! Boarding now...
+      </div>
+
+      <div id="startMenu" class="start-menu">
+        <div class="menu-panel">
+          <h1>Moon Binary Mission</h1>
+          <p>Choose a conversion mode, collect the crates, and rebuild the rocket.</p>
+
+          <div class="mode-list" aria-label="Select game mode">
+            <button type="button" data-mode-key="binary_decimal_4bit">
+              Binary to Decimal / Decimal to Binary: 4-bit
+            </button>
+            <button type="button" data-mode-key="binary_decimal_8bit">
+              Binary to Decimal / Decimal to Binary: 8-bit
+            </button>
+            <button type="button" data-mode-key="binary_hex_1byte">
+              Binary to Hex / Hex to Binary: 1 byte
+            </button>
+            <button type="button" data-mode-key="decimal_hex_1byte">
+              Decimal to Hex / Hex to Decimal: 1 byte
+            </button>
+            <button type="button" data-mode-key="all_conversions">
+              All conversions
+            </button>
+            <button type="button" data-action="view-scores">
+              View High Scores
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="questionModal" class="overlay-panel is-hidden" role="dialog" aria-modal="true" aria-labelledby="questionTitle">
+        <form id="questionForm" class="modal-panel">
+          <h2 id="questionTitle">Conversion Question</h2>
+          <p id="questionText" class="question-text"></p>
+          <label for="answerInput">Your answer</label>
+          <input id="answerInput" type="text" autocomplete="off" inputmode="text">
+          <p id="questionFeedback" class="feedback" aria-live="polite"></p>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+
+      <div id="endScreen" class="overlay-panel is-hidden">
+        <form id="initialsForm" class="modal-panel">
+          <h2>Mission Complete!</h2>
+          <dl class="results-list">
+            <div>
+              <dt>Final time</dt>
+              <dd id="finalTime">00:00</dd>
+            </div>
+            <div>
+              <dt>Incorrect attempts</dt>
+              <dd id="finalIncorrect">0</dd>
+            </div>
+            <div>
+              <dt>Mode</dt>
+              <dd id="finalMode">All conversions</dd>
+            </div>
+          </dl>
+          <label for="initialsInput">Enter 3 initials</label>
+          <input id="initialsInput" type="text" maxlength="3" autocomplete="off" inputmode="text">
+          <p id="initialsFeedback" class="feedback" aria-live="polite"></p>
+          <button type="submit">Save Score</button>
+        </form>
+      </div>
+
+      <div id="leaderboardScreen" class="overlay-panel is-hidden">
+        <div class="modal-panel">
+          <h2 id="leaderboardTitle">High Scores</h2>
+          <p id="savedScoreText" class="question-text"></p>
+
+          <div id="leaderboardModeMenu" class="mode-list" aria-label="Choose high score mode">
+            <button type="button" data-score-mode-key="binary_decimal_4bit">
+              Binary/Decimal 4-bit
+            </button>
+            <button type="button" data-score-mode-key="binary_decimal_8bit">
+              Binary/Decimal 8-bit
+            </button>
+            <button type="button" data-score-mode-key="binary_hex_1byte">
+              Binary/Hex 1 byte
+            </button>
+            <button type="button" data-score-mode-key="decimal_hex_1byte">
+              Decimal/Hex 1 byte
+            </button>
+            <button type="button" data-score-mode-key="all_conversions">
+              All conversions
+            </button>
+          </div>
+
+          <div id="leaderboardTableArea" class="leaderboard-table-area is-hidden"></div>
+          <button id="leaderboardBackButton" type="button">Back</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
