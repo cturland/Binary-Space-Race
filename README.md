@@ -18,7 +18,7 @@ Moon Binary Mission is a browser-based classroom game for practising binary and 
 ## Game Rules
 
 1. Select a conversion mode from the start menu.
-2. Use W, A, S and D to move the spaceman around the moon.
+2. Use the arrow keys to move the spaceman around the moon.
 3. Touch a crate to open a conversion question.
 4. Movement pauses while the question is open, but the timer keeps running.
 5. Type the answer and press Enter or click Submit.
@@ -95,7 +95,7 @@ Useful examples:
 2. Install the **Live Server** extension if you do not already have it.
 3. Right-click `index.html`.
 4. Choose **Open with Live Server**.
-5. Select a game mode and use W, A, S and D to move the spaceman.
+5. Select a game mode and use the arrow keys to move the spaceman.
 
 You can also open `index.html` directly in a browser, but Live Server is recommended because it behaves more like the hosted GitHub Pages version.
 

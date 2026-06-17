@@ -167,7 +167,7 @@ class Game {
   bindEvents() {
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
-      if (this.state === GAME_STATES.playing && !isTextInputFocused() && ["w", "a", "s", "d"].includes(key)) {
+      if (this.state === GAME_STATES.playing && !isTextInputFocused() && isMovementKey(key)) {
         event.preventDefault();
         this.keys.add(key);
       }
@@ -379,10 +379,10 @@ class Game {
     let moveX = 0;
     let moveY = 0;
 
-    if (this.keys.has("a")) moveX -= 1;
-    if (this.keys.has("d")) moveX += 1;
-    if (this.keys.has("w")) moveY -= 1;
-    if (this.keys.has("s")) moveY += 1;
+    if (this.keys.has("arrowleft")) moveX -= 1;
+    if (this.keys.has("arrowright")) moveX += 1;
+    if (this.keys.has("arrowup")) moveY -= 1;
+    if (this.keys.has("arrowdown")) moveY += 1;
 
     if (moveX !== 0 || moveY !== 0) {
       const length = Math.hypot(moveX, moveY);
@@ -937,6 +937,10 @@ function isTextInputFocused() {
   }
 
   return activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA";
+}
+
+function isMovementKey(key) {
+  return ["arrowleft", "arrowright", "arrowup", "arrowdown"].includes(key);
 }
 
 function formatTime(milliseconds) {
