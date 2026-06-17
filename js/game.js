@@ -416,6 +416,7 @@ class Game {
   }
 
   update(deltaTime) {
+    const activeState = this.getActiveState();
     this.updateAnimationTimers(deltaTime);
 
     if (this.state === GAME_STATES.playing) {
@@ -423,16 +424,20 @@ class Game {
       this.checkCrateCollisions();
     }
 
-    if (this.state === GAME_STATES.rocketComplete) {
+    if (activeState === GAME_STATES.rocketComplete) {
       this.rocketCompleteTime += deltaTime;
       if (this.rocketCompleteTime >= ROCKET_COMPLETE_SECONDS) {
-        this.state = GAME_STATES.rocketTakeoff;
+        if (this.state === GAME_STATES.confirmCancel) {
+          this.stateBeforeCancelPrompt = GAME_STATES.rocketTakeoff;
+        } else {
+          this.state = GAME_STATES.rocketTakeoff;
+        }
         this.launchMessage.classList.add("is-hidden");
         this.takeoffRocketY = ROCKET_ASSEMBLY_BOX.y;
       }
     }
 
-    if (this.state === GAME_STATES.rocketTakeoff) {
+    if (activeState === GAME_STATES.rocketTakeoff) {
       this.takeoffRocketY -= ROCKET_TAKEOFF_SPEED * deltaTime;
       if (this.takeoffRocketY + ROCKET_ASSEMBLY_BOX.height < 0) {
         this.finishMission();
@@ -566,6 +571,7 @@ class Game {
 
   finishMission() {
     this.state = GAME_STATES.enterInitials;
+    this.cancelGameModal.classList.add("is-hidden");
     this.finalTimeMs = this.getCurrentTimeMs();
     this.finalTime.textContent = formatTime(this.finalTimeMs);
     this.finalIncorrect.textContent = String(this.incorrectAttempts);
@@ -759,6 +765,10 @@ class Game {
   }
 
   getVisibleState() {
+    return this.state === GAME_STATES.confirmCancel ? this.stateBeforeCancelPrompt : this.state;
+  }
+
+  getActiveState() {
     return this.state === GAME_STATES.confirmCancel ? this.stateBeforeCancelPrompt : this.state;
   }
 }
