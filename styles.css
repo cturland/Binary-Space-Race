@@ -216,6 +216,18 @@ canvas {
   cursor: pointer;
 }
 
+.modal-panel .secondary-button {
+  color: #f8fbff;
+  background: #1a335c;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .question-text {
   font-size: clamp(1.2rem, 3vw, 1.7rem);
   font-weight: 700;
@@ -312,5 +324,9 @@ canvas {
   .menu-panel,
   .modal-panel {
     padding: 18px;
+  }
+
+  .button-row {
+    grid-template-columns: 1fr;
   }
 }

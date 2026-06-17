@@ -27,6 +27,8 @@ Moon Binary Mission is a browser-based classroom game for practising binary and 
 8. Reach 8/8 rocket pieces to board the rocket and launch it.
 9. After launch, enter exactly 3 initials to save the score in the local high score table.
 
+Press Escape during a mission to open a confirmation prompt for returning to the main menu and cancelling the current run.
+
 ## Conversion Modes
 
 - Binary to Decimal / Decimal to Binary: 4-bit values from 0 to 15
@@ -76,10 +78,11 @@ Online Google Sheet leaderboard support will be added later.
 4. Try a correct answer and confirm the crate disappears and the HUD count increases.
 5. Touch another crate.
 6. Try an incorrect answer and confirm the message appears and the timer jumps by 5 seconds.
-7. Reach 8/8 to test the boarding message, rocket complete image, takeoff animation and initials screen.
-8. Enter 3 initials and confirm the score appears in the correct high score table.
-9. Return to the main menu and use **View High Scores** to open tables for each mode.
-10. Repeat for each mode.
+7. Press Escape and confirm that you can either keep playing or return to the main menu.
+8. Reach 8/8 to test the boarding message, rocket complete image, takeoff animation and initials screen.
+9. Enter 3 initials and confirm the score appears in the correct high score table.
+10. Return to the main menu and use **View High Scores** to open tables for each mode.
+11. Repeat for each mode.
 
 Useful examples:
 

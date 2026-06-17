@@ -23,6 +23,7 @@ const GAME_STATES = {
   rocketComplete: "rocketComplete",
   rocketTakeoff: "rocketTakeoff",
   enterInitials: "enterInitials",
+  confirmCancel: "confirmCancel",
   leaderboard: "leaderboard"
 };
 
@@ -96,6 +97,9 @@ class Game {
     this.questionText = document.getElementById("questionText");
     this.answerInput = document.getElementById("answerInput");
     this.questionFeedback = document.getElementById("questionFeedback");
+    this.cancelGameModal = document.getElementById("cancelGameModal");
+    this.confirmCancelGameButton = document.getElementById("confirmCancelGameButton");
+    this.resumeGameButton = document.getElementById("resumeGameButton");
     this.launchMessage = document.getElementById("launchMessage");
     this.endScreen = document.getElementById("endScreen");
     this.initialsForm = document.getElementById("initialsForm");
@@ -122,6 +126,7 @@ class Game {
     this.selectedMode = GAME_MODES[this.selectedModeKey];
     this.currentQuestion = null;
     this.currentCrate = null;
+    this.stateBeforeCancelPrompt = GAME_STATES.menu;
     this.startTime = 0;
     this.lastFrameTime = 0;
     this.finalTimeMs = 0;
@@ -167,6 +172,11 @@ class Game {
   bindEvents() {
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
+      if (key === "escape") {
+        this.handleEscapeKey(event);
+        return;
+      }
+
       if (this.state === GAME_STATES.playing && !isTextInputFocused() && isMovementKey(key)) {
         event.preventDefault();
         this.keys.add(key);
@@ -207,6 +217,14 @@ class Game {
       } else {
         this.showLeaderboardModeMenu();
       }
+    });
+
+    this.confirmCancelGameButton.addEventListener("click", () => {
+      this.cancelCurrentGame();
+    });
+
+    this.resumeGameButton.addEventListener("click", () => {
+      this.closeCancelPrompt();
     });
 
     this.questionForm.addEventListener("submit", (event) => {
@@ -294,6 +312,7 @@ class Game {
     this.hudPieces.textContent = `0/${CRATE_COUNT}`;
     this.startMenu.classList.remove("is-hidden");
     this.questionModal.classList.add("is-hidden");
+    this.cancelGameModal.classList.add("is-hidden");
     this.launchMessage.classList.add("is-hidden");
     this.endScreen.classList.add("is-hidden");
     this.leaderboardScreen.classList.add("is-hidden");
@@ -312,6 +331,7 @@ class Game {
     this.leaderboardBackButton.textContent = "Back";
     this.startMenu.classList.add("is-hidden");
     this.endScreen.classList.add("is-hidden");
+    this.cancelGameModal.classList.add("is-hidden");
     this.leaderboardScreen.classList.remove("is-hidden");
   }
 
@@ -327,7 +347,60 @@ class Game {
     this.leaderboardBackButton.textContent = "Back";
     this.startMenu.classList.add("is-hidden");
     this.endScreen.classList.add("is-hidden");
+    this.cancelGameModal.classList.add("is-hidden");
     this.leaderboardScreen.classList.remove("is-hidden");
+  }
+
+  handleEscapeKey(event) {
+    if (!this.isCancelableGameState()) {
+      return;
+    }
+
+    event.preventDefault();
+    if (this.state === GAME_STATES.confirmCancel) {
+      this.closeCancelPrompt();
+    } else {
+      this.openCancelPrompt();
+    }
+  }
+
+  isCancelableGameState() {
+    return [
+      GAME_STATES.playing,
+      GAME_STATES.question,
+      GAME_STATES.rocketComplete,
+      GAME_STATES.rocketTakeoff,
+      GAME_STATES.confirmCancel
+    ].includes(this.state);
+  }
+
+  openCancelPrompt() {
+    this.stateBeforeCancelPrompt = this.state;
+    this.state = GAME_STATES.confirmCancel;
+    this.keys.clear();
+    this.player.isMoving = false;
+    this.cancelGameModal.classList.remove("is-hidden");
+    this.resumeGameButton.focus();
+  }
+
+  closeCancelPrompt() {
+    this.state = this.stateBeforeCancelPrompt;
+    this.cancelGameModal.classList.add("is-hidden");
+    if (this.state === GAME_STATES.question) {
+      this.answerInput.focus();
+    } else {
+      this.canvas.focus();
+    }
+  }
+
+  cancelCurrentGame() {
+    this.crates = [];
+    this.keys.clear();
+    this.player.isMoving = false;
+    this.currentQuestion = null;
+    this.currentCrate = null;
+    this.questionModal.classList.add("is-hidden");
+    this.showMainMenu();
   }
 
   loop(timestamp) {
@@ -585,12 +658,14 @@ class Game {
   }
 
   drawRocketAssembly() {
-    if (this.state === GAME_STATES.rocketComplete) {
+    const visibleState = this.getVisibleState();
+
+    if (visibleState === GAME_STATES.rocketComplete) {
       this.drawRocketImage(this.assets.rocketComplete, ROCKET_ASSEMBLY_BOX.y);
       return;
     }
 
-    if (this.state === GAME_STATES.rocketTakeoff || this.state === GAME_STATES.enterInitials || this.state === GAME_STATES.leaderboard) {
+    if (visibleState === GAME_STATES.rocketTakeoff || visibleState === GAME_STATES.enterInitials || visibleState === GAME_STATES.leaderboard) {
       this.drawRocketImage(this.assets.rocketTakeoff, this.takeoffRocketY);
       return;
     }
@@ -611,7 +686,9 @@ class Game {
   }
 
   drawCrates() {
-    if (this.state === GAME_STATES.rocketComplete || this.state === GAME_STATES.rocketTakeoff) {
+    const visibleState = this.getVisibleState();
+
+    if (visibleState === GAME_STATES.rocketComplete || visibleState === GAME_STATES.rocketTakeoff) {
       return;
     }
 
@@ -626,11 +703,13 @@ class Game {
   }
 
   drawPlayer() {
+    const visibleState = this.getVisibleState();
+
     if (
-      this.state === GAME_STATES.rocketComplete ||
-      this.state === GAME_STATES.rocketTakeoff ||
-      this.state === GAME_STATES.enterInitials ||
-      this.state === GAME_STATES.leaderboard
+      visibleState === GAME_STATES.rocketComplete ||
+      visibleState === GAME_STATES.rocketTakeoff ||
+      visibleState === GAME_STATES.enterInitials ||
+      visibleState === GAME_STATES.leaderboard
     ) {
       return;
     }
@@ -677,6 +756,10 @@ class Game {
     }
 
     return 0;
+  }
+
+  getVisibleState() {
+    return this.state === GAME_STATES.confirmCancel ? this.stateBeforeCancelPrompt : this.state;
   }
 }
 

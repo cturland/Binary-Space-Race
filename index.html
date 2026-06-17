@@ -71,6 +71,17 @@
         </form>
       </div>
 
+      <div id="cancelGameModal" class="overlay-panel is-hidden" role="dialog" aria-modal="true" aria-labelledby="cancelGameTitle">
+        <div class="modal-panel">
+          <h2 id="cancelGameTitle">Return to main menu?</h2>
+          <p>This will cancel the current mission.</p>
+          <div class="button-row">
+            <button id="confirmCancelGameButton" type="button">Return to Menu</button>
+            <button id="resumeGameButton" type="button" class="secondary-button">Keep Playing</button>
+          </div>
+        </div>
+      </div>
+
       <div id="endScreen" class="overlay-panel is-hidden">
         <form id="initialsForm" class="modal-panel">
           <h2>Mission Complete!</h2>
