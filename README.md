@@ -1,6 +1,6 @@
-# Moon Binary Mission
+# Binary Space Race
 
-Moon Binary Mission is a browser-based classroom game for practising binary and hexadecimal conversions. It uses plain HTML, CSS and JavaScript with an HTML5 Canvas.
+Binary Space Race is a browser-based classroom game for practising binary and hexadecimal conversions. It uses plain HTML, CSS and JavaScript with an HTML5 Canvas.
 
 ## Project Structure
 
