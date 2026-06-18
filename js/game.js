@@ -15,6 +15,8 @@ const TIME_PENALTY_MS = 5000;
 const ROCKET_COMPLETE_SECONDS = 1.1;
 const ROCKET_TAKEOFF_SPEED = 310;
 const LEADERBOARD_STORAGE_PREFIX = "moonBinaryMissionScores";
+const LEADERBOARD_API_URL = String(window.LEADERBOARD_API_URL || "").trim();
+const LEADERBOARD_REQUEST_TIMEOUT_MS = 8000;
 
 const GAME_STATES = {
   menu: "menu",
@@ -130,6 +132,7 @@ class Game {
     this.startTime = 0;
     this.lastFrameTime = 0;
     this.finalTimeMs = 0;
+    this.leaderboardRequestId = 0;
     this.timePenaltyMs = 0;
     this.incorrectAttempts = 0;
     this.rocketPiecesCollected = 0;
@@ -335,20 +338,28 @@ class Game {
     this.leaderboardScreen.classList.remove("is-hidden");
   }
 
-  showLeaderboardTable(modeKey, savedScoreText = "") {
+  async showLeaderboardTable(modeKey, savedScoreText = "") {
     const mode = GAME_MODES[modeKey] || GAME_MODES.all_conversions;
-    const scores = loadScores(modeKey);
+    const requestId = this.leaderboardRequestId + 1;
+    this.leaderboardRequestId = requestId;
     this.state = GAME_STATES.leaderboard;
     this.leaderboardTitle.textContent = mode.label;
     this.savedScoreText.textContent = savedScoreText;
     this.leaderboardModeMenu.classList.add("is-hidden");
     this.leaderboardTableArea.classList.remove("is-hidden");
-    this.leaderboardTableArea.innerHTML = createLeaderboardMarkup(scores);
+    this.leaderboardTableArea.innerHTML = `<p class="empty-scores">Loading scores...</p>`;
     this.leaderboardBackButton.textContent = "Back";
     this.startMenu.classList.add("is-hidden");
     this.endScreen.classList.add("is-hidden");
     this.cancelGameModal.classList.add("is-hidden");
     this.leaderboardScreen.classList.remove("is-hidden");
+
+    const scores = await loadScores(modeKey);
+    if (requestId !== this.leaderboardRequestId || this.state !== GAME_STATES.leaderboard) {
+      return;
+    }
+
+    this.leaderboardTableArea.innerHTML = createLeaderboardMarkup(scores);
   }
 
   handleEscapeKey(event) {
@@ -582,7 +593,7 @@ class Game {
     this.initialsInput.focus();
   }
 
-  saveInitials() {
+  async saveInitials() {
     const initials = this.initialsInput.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 3);
     if (initials.length !== 3) {
       this.initialsFeedback.textContent = "Please enter exactly 3 letters.";
@@ -599,7 +610,8 @@ class Game {
       savedAt: new Date().toISOString()
     };
 
-    saveScore(score);
+    this.initialsFeedback.textContent = "Saving score...";
+    await saveScore(score);
     console.log(`Score saved: ${initials} - ${finalTime} - ${this.selectedMode.label}`);
     this.endScreen.classList.add("is-hidden");
     this.showLeaderboardTable(this.selectedModeKey, `Saved: ${initials} - ${finalTime}`);
@@ -938,8 +950,17 @@ function isLikelyGeneratedBackgroundPixel(r, g, b, a) {
   return veryLight || lightCheckerGrey;
 }
 
-function saveScore(score) {
-  const scores = loadScores(score.modeKey);
+async function saveScore(score) {
+  const savedRemotely = await saveRemoteScore(score);
+  saveLocalScore(score);
+
+  if (!savedRemotely && LEADERBOARD_API_URL) {
+    console.warn("Shared leaderboard unavailable; score was saved locally.");
+  }
+}
+
+function saveLocalScore(score) {
+  const scores = loadLocalScores(score.modeKey);
   scores.push(score);
   scores.sort((a, b) => a.timeMs - b.timeMs);
   const topScores = scores.slice(0, 10);
@@ -951,7 +972,91 @@ function saveScore(score) {
   }
 }
 
-function loadScores(modeKey) {
+async function loadScores(modeKey) {
+  const remoteScores = await loadRemoteScores(modeKey);
+  if (remoteScores) {
+    return remoteScores;
+  }
+
+  return loadLocalScores(modeKey);
+}
+
+async function saveRemoteScore(score) {
+  if (!LEADERBOARD_API_URL) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(LEADERBOARD_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(score)
+    });
+
+    return response.ok || response.type === "opaque";
+  } catch (error) {
+    console.warn("Could not save score to shared leaderboard.", error);
+    return false;
+  }
+}
+
+async function loadRemoteScores(modeKey) {
+  if (!LEADERBOARD_API_URL) {
+    return null;
+  }
+
+  try {
+    const url = new URL(LEADERBOARD_API_URL);
+    url.searchParams.set("modeKey", modeKey);
+
+    const payload = await loadJsonp(url);
+    if (!payload || !Array.isArray(payload.scores)) {
+      return [];
+    }
+
+    return normalizeScores(payload.scores);
+  } catch (error) {
+    console.warn("Could not load shared leaderboard; using local scores.", error);
+    return null;
+  }
+}
+
+function loadJsonp(url) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `leaderboardCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Leaderboard request timed out"));
+    }, LEADERBOARD_REQUEST_TIMEOUT_MS);
+
+    function cleanup() {
+      window.clearTimeout(timeoutId);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (payload) => {
+      cleanup();
+      resolve(payload);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Leaderboard request failed"));
+    };
+
+    url.searchParams.set("callback", callbackName);
+    url.searchParams.set("cacheBust", Date.now().toString());
+    script.src = url.toString();
+    document.head.appendChild(script);
+  });
+}
+
+function loadLocalScores(modeKey) {
   try {
     const savedScores = localStorage.getItem(getLeaderboardKey(modeKey));
     if (!savedScores) {
@@ -963,20 +1068,31 @@ function loadScores(modeKey) {
       return [];
     }
 
-    return parsedScores
-      .filter((score) => {
-        return (
-          typeof score.initials === "string" &&
-          typeof score.timeMs === "number" &&
-          typeof score.incorrectAttempts === "number"
-        );
-      })
-      .sort((a, b) => a.timeMs - b.timeMs)
-      .slice(0, 10);
+    return normalizeScores(parsedScores);
   } catch (error) {
     console.warn("Could not load local scores.", error);
     return [];
   }
+}
+
+function normalizeScores(scores) {
+  return scores
+    .map((score) => ({
+      initials: String(score.initials || "").replace(/[^a-z]/gi, "").toUpperCase().slice(0, 3),
+      timeMs: Number(score.timeMs),
+      incorrectAttempts: Number(score.incorrectAttempts),
+      modeKey: score.modeKey,
+      savedAt: score.savedAt
+    }))
+    .filter((score) => {
+      return (
+        score.initials.length === 3 &&
+        Number.isFinite(score.timeMs) &&
+        Number.isInteger(score.incorrectAttempts)
+      );
+    })
+    .sort((a, b) => a.timeMs - b.timeMs)
+    .slice(0, 10);
 }
 
 function getLeaderboardKey(modeKey) {

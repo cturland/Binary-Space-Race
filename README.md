@@ -25,7 +25,7 @@ Binary Space Race is a browser-based classroom game for practising binary and he
 6. A correct answer removes the crate and increases the rocket piece count.
 7. An incorrect answer keeps the same question open and adds a 5 second time penalty.
 8. Reach 8/8 rocket pieces to board the rocket and launch it.
-9. After launch, enter exactly 3 initials to save the score in the local high score table.
+9. After launch, enter exactly 3 initials to save the score in the high score table.
 
 Press Escape during a mission to open a confirmation prompt for returning to the main menu and cancelling the current run.
 
@@ -59,7 +59,9 @@ The individual rocket piece images may still be loaded, but they are not drawn o
 
 High scores can be opened from the main menu with **View High Scores**.
 
-Scores are currently saved locally in the browser using `localStorage`. Each game mode has its own table, and each table keeps the top 10 fastest times. Multiple scores from the same initials are allowed.
+Scores can be shared by connecting the game to the Google Apps Script leaderboard backend in `google-apps-script/leaderboard.gs`. If no backend URL is configured, the game falls back to browser-local scores using `localStorage`.
+
+Each game mode has its own table, and each table keeps the top 10 fastest times. Multiple scores from the same initials are allowed.
 
 The high score table shows:
 
@@ -68,7 +70,24 @@ The high score table shows:
 - final time
 - incorrect attempts
 
-Online Google Sheet leaderboard support will be added later.
+## Shared Google Sheet Leaderboard
+
+1. Create a Google Sheet for the leaderboard.
+2. In the Sheet, choose **Extensions > Apps Script**.
+3. Paste the contents of `google-apps-script/leaderboard.gs` into the Apps Script editor.
+4. Save the script.
+5. Choose **Deploy > New deployment**.
+6. Select **Web app**.
+7. Set **Execute as** to **Me**.
+8. Set **Who has access** to **Anyone**.
+9. Deploy, then copy the web app URL ending in `/exec`.
+10. Paste that URL into `js/leaderboard-config.js`:
+
+```js
+window.LEADERBOARD_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+```
+
+After this is set, everyone who plays the hosted game will read and write the same Google Sheet leaderboard. The game uses JSONP/no-CORS requests so it can run from GitHub Pages or Live Server without a separate backend. Keep `js/leaderboard-config.js` blank for local-only testing.
 
 ## Testing Each Mode
 
