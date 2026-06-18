@@ -359,6 +359,11 @@ class Game {
       return;
     }
 
+    if (!scores) {
+      this.leaderboardTableArea.innerHTML = `<p class="empty-scores">Shared leaderboard unavailable</p>`;
+      return;
+    }
+
     this.leaderboardTableArea.innerHTML = createLeaderboardMarkup(scores);
   }
 
@@ -611,7 +616,12 @@ class Game {
     };
 
     this.initialsFeedback.textContent = "Saving score...";
-    await saveScore(score);
+    const saved = await saveScore(score);
+    if (!saved) {
+      this.initialsFeedback.textContent = "Could not save to the shared leaderboard. Please try again.";
+      return;
+    }
+
     console.log(`Score saved: ${initials} - ${finalTime} - ${this.selectedMode.label}`);
     this.endScreen.classList.add("is-hidden");
     this.showLeaderboardTable(this.selectedModeKey, `Saved: ${initials} - ${finalTime}`);
@@ -951,12 +961,16 @@ function isLikelyGeneratedBackgroundPixel(r, g, b, a) {
 }
 
 async function saveScore(score) {
-  const savedRemotely = await saveRemoteScore(score);
-  saveLocalScore(score);
-
-  if (!savedRemotely && LEADERBOARD_API_URL) {
-    console.warn("Shared leaderboard unavailable; score was saved locally.");
+  if (LEADERBOARD_API_URL) {
+    const savedRemotely = await saveRemoteScore(score);
+    if (!savedRemotely) {
+      console.warn("Shared leaderboard unavailable; score was not saved.");
+    }
+    return savedRemotely;
   }
+
+  saveLocalScore(score);
+  return true;
 }
 
 function saveLocalScore(score) {
@@ -973,9 +987,8 @@ function saveLocalScore(score) {
 }
 
 async function loadScores(modeKey) {
-  const remoteScores = await loadRemoteScores(modeKey);
-  if (remoteScores) {
-    return remoteScores;
+  if (LEADERBOARD_API_URL) {
+    return loadRemoteScores(modeKey);
   }
 
   return loadLocalScores(modeKey);
@@ -987,16 +1000,12 @@ async function saveRemoteScore(score) {
   }
 
   try {
-    const response = await fetch(LEADERBOARD_API_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(score)
-    });
+    const url = new URL(LEADERBOARD_API_URL);
+    url.searchParams.set("action", "save");
+    url.searchParams.set("score", JSON.stringify(score));
 
-    return response.ok || response.type === "opaque";
+    const payload = await loadJsonp(url);
+    return Boolean(payload?.ok);
   } catch (error) {
     console.warn("Could not save score to shared leaderboard.", error);
     return false;

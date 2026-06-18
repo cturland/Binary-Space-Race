@@ -59,7 +59,7 @@ The individual rocket piece images may still be loaded, but they are not drawn o
 
 High scores can be opened from the main menu with **View High Scores**.
 
-Scores can be shared by connecting the game to the Google Apps Script leaderboard backend in `google-apps-script/leaderboard.gs`. If no backend URL is configured, the game falls back to browser-local scores using `localStorage`.
+Scores are shared by connecting the game to the Google Apps Script leaderboard backend in `google-apps-script/leaderboard.gs`. If no backend URL is configured, the game uses browser-local scores with `localStorage` for development.
 
 Each game mode has its own table, and each table keeps the top 10 fastest times. Multiple scores from the same initials are allowed.
 
@@ -87,7 +87,7 @@ The high score table shows:
 window.LEADERBOARD_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
 ```
 
-After this is set, everyone who plays the hosted game will read and write the same Google Sheet leaderboard. The game uses JSONP/no-CORS requests so it can run from GitHub Pages or Live Server without a separate backend. Keep `js/leaderboard-config.js` blank for local-only testing.
+After this is set, everyone who plays the hosted game will read and write the same Google Sheet leaderboard. Shared saves and loads use JSONP so the game can run from GitHub Pages or Live Server without a separate backend. Keep `js/leaderboard-config.js` blank only for local-only testing.
 
 ## Testing Each Mode
 

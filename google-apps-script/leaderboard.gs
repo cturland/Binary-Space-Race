@@ -9,6 +9,17 @@ const VALID_MODE_KEYS = new Set([
 ]);
 
 function doGet(event) {
+  const action = String(event.parameter.action || "");
+  if (action === "save") {
+    const payload = JSON.parse(event.parameter.score || "{}");
+    const score = saveScore(payload);
+
+    return jsonResponse({
+      ok: true,
+      scores: getTopScores(score.modeKey)
+    }, event.parameter.callback);
+  }
+
   const modeKey = String(event.parameter.modeKey || "");
   return jsonResponse({
     scores: getTopScores(modeKey)
@@ -17,6 +28,15 @@ function doGet(event) {
 
 function doPost(event) {
   const payload = JSON.parse(event.postData.contents || "{}");
+  const score = saveScore(payload);
+
+  return jsonResponse({
+    ok: true,
+    scores: getTopScores(score.modeKey)
+  });
+}
+
+function saveScore(payload) {
   const score = normalizeScore(payload);
 
   const lock = LockService.getScriptLock();
@@ -34,10 +54,7 @@ function doPost(event) {
     lock.releaseLock();
   }
 
-  return jsonResponse({
-    ok: true,
-    scores: getTopScores(score.modeKey)
-  });
+  return score;
 }
 
 function getTopScores(modeKey) {
