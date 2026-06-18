@@ -175,6 +175,21 @@ canvas {
   text-transform: uppercase;
 }
 
+.app-version-badge {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  padding: 6px 8px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  background: rgba(5, 8, 18, 0.84);
+  border: 1px solid rgba(145, 199, 255, 0.52);
+  border-radius: 6px;
+}
+
 .overlay-panel {
   position: absolute;
   inset: 0;

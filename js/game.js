@@ -1,5 +1,6 @@
 "use strict";
 
+const APP_VERSION = "2026.06.18.6";
 const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
 const PLAYER_SPEED = 280;
@@ -165,11 +166,29 @@ class Game {
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
 
+    this.showAppVersion();
     this.bindEvents();
     await this.loadAssets();
     this.setupSpacemanSprite();
     this.placeCrates();
     this.draw();
+  }
+
+  showAppVersion() {
+    const versionText = `Version ${APP_VERSION}`;
+    const menuVersion = this.startMenu.querySelector(".app-version");
+    if (menuVersion) {
+      menuVersion.textContent = versionText;
+    }
+
+    let versionBadge = this.startMenu.querySelector(".app-version-badge");
+    if (!versionBadge) {
+      versionBadge = document.createElement("div");
+      versionBadge.className = "app-version-badge";
+      this.startMenu.appendChild(versionBadge);
+    }
+
+    versionBadge.textContent = versionText;
   }
 
   bindEvents() {
